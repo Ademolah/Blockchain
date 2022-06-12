@@ -6,7 +6,6 @@ import os
 
 with open("./SimpleStorage.sol", "r") as file:
     simple_storage_file = file.read()
-    print(simple_storage_file)
 
 compiled_sol = compile_standard(
     {
@@ -33,13 +32,11 @@ abi = compiled_sol["contracts"]["simpleStorage.sol"]["SimpleStorage"]["abi"]
 #connecting ganache 
 w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:7545"))
 chain_id = 1337
-my_address = "0x010ae82e8EF6dd16EE41c85A71f2D8E80B6eF3BA"
-#my_privateKey = "0xf83809eb85cacc3d9c09417a48286bb1a35045f18f3d93acbcb4ed36e4f87572"
+my_address = "0xd28A43Dddc9AD965d49E015fEFB0B248614DcE2B"
+#my_privateKey = "0xbb733f612a0bc6341f72a5dce9a7ee1906098746578eb0b2b30257d91aac8e9e"
 my_privateKey = os.getenv("PRIVATE_KEY")
-print(my_privateKey)
 
 #create the contract in python
-
 SimpleStorage = w3.eth.contract(abi = abi, bytecode=bytecode)
 
 #get transactions count 
@@ -54,4 +51,24 @@ transaction = SimpleStorage.constructor().buildTransaction(
     {"gasPrice": w3.eth.gas_price,"chainId": chain_id, "from": my_address, "nonce": nonce}
     )
 
-signed_txn = w3.eth.account.signTransaction(transaction, private_key= my_privateKey)
+#signing our transaction
+signed_txn = w3.eth.account.signTransaction(transaction, private_key = my_privateKey)
+
+
+#send transaction to ganache
+txn_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
+
+#working with the contract
+simple_storage = w3.eth.contract(address = txn_receipt.contractAddress, abi = abi)
+print(simple_storage.functions.retrieve().call())
+
+store_txn = simple_storage.functions.store(12).buildTransaction(
+    {"gasPrice": w3.eth.gas_price,"chainId": chain_id, "from": my_address, "nonce": nonce}
+    )
+
+
+
+
+
+
