@@ -32,10 +32,10 @@ bytecode = compiled_sol["contracts"]["simpleStorage.sol"]["SimpleStorage"]["evm"
 #get abi 
 abi = compiled_sol["contracts"]["simpleStorage.sol"]["SimpleStorage"]["abi"]
 
-#connecting ganache 
+#connecting rinkeby
 w3 = Web3(Web3.HTTPProvider("https://rinkeby.infura.io/v3/91030e0778df4696aa19e04d08b2d465"))
 chain_id = 4
-my_address = "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1"
+my_address = "0x7e4fC45962d9DB70Be05024d37bDBF016bc1312c"
 #my_privateKey = "0xbb733f612a0bc6341f72a5dce9a7ee1906098746578eb0b2b30257d91aac8e9e"
 my_privateKey = os.getenv("PRIVATE_KEY1")
 
@@ -58,21 +58,25 @@ transaction = SimpleStorage.constructor().buildTransaction(
 signed_txn = w3.eth.account.signTransaction(transaction, private_key = my_privateKey)
 
 
-#send transaction to ganache
+#send transaction to rinkeby
 txn_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
 
-#working with the contract
+#working with the rinkeby by creating a simple_storage contract
 simple_storage = w3.eth.contract(address = txn_receipt.contractAddress, abi = abi)
 print(simple_storage.functions.retrieve().call())
 
+#building the contract transaction
 store_txn = simple_storage.functions.store(12).buildTransaction(
     {"gasPrice": w3.eth.gas_price,"chainId": chain_id, "from": my_address, "nonce": nonce + 1}
     )
 
+#signing the transaction
 signed_store_txn = w3.eth.account.signTransaction(store_txn, private_key = my_privateKey)
 
 print("Deploying contract...")
+
+#sending the transaction
 send_store_txn = w3.eth.send_raw_transaction(signed_store_txn.rawTransaction)
 store_txn_receipt = w3.eth.wait_for_transaction_receipt(send_store_txn)
 print("Deployed !")
